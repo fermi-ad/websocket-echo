@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>WebSocket Echo</title>
+</head>
+
+<body>
+    <form>
+        <label for="server">Server:</label>
+        <input type="text" name="server" id="server" value="ws://localhost:8085">
+        <button id="connect">Connect</button>
+        <button id="close" disabled>Close</button>
+    </form>
+    <form>
+        <label for="message">Message:</label>
+        <input type="text" name="message" id="message">
+        <button id="send" disabled>Send</button>
+    </form>
+    <form>
+        <textarea name="log" id="log" cols="30" rows="10"></textarea>
+        <button id="clear">Clear log</button>
+    </form>
+    <script>
+        let ws;
+
+        const logArea = document.querySelector('#log');
+        const serverName = document.querySelector('#server');
+        const connectButton = document.querySelector('#connect');
+        const closeButton = document.querySelector('#close');
+        const message = document.querySelector('#message');
+        const sendButton = document.querySelector('#send');
+        const clearButton = document.querySelector('#clear');
+
+        function log(message) {
+            logArea.textContent = logArea.textContent.trim() + '\n' + message;
+        }
+
+        connectButton.addEventListener('click', event => {
+            event.preventDefault();
+
+            connectButton.disabled = true;
+            closeButton.disabled = false;
+            sendButton.disabled = false;
+
+            ws = new WebSocket(serverName.value);
+            ws.onopen = () => log('CLIENT: CONNECTED');
+            ws.onmessage = messageEvent => log(messageEvent.data);
+            ws.onerror = error => log(`CLIENT: ERROR ${error.message}`);
+            ws.onclose = closeEvent => log(`CLIENT: (${closeEvent.code})`);
+        });
+
+        closeButton.addEventListener('click', event => {
+            event.preventDefault();
+
+            connectButton.disabled = false;
+            closeButton.disabled = true;
+            sendButton.disabled = true;
+
+            log('CLIENT: CLOSE');
+            ws.close(1000, 'CLIENT CLOSE');
+            ws = undefined;
+        });
+
+        sendButton.addEventListener('click', event => {
+            event.preventDefault();
+
+            log(`CLIENT: ${message.value}`)
+            ws.send(message.value);
+            message.value = '';
+        });
+
+        clearButton.addEventListener('click', event => {
+            event.preventDefault();
+
+            logArea.textContent = '';
+        });
+    </script>
+</body>
+
+</html>
